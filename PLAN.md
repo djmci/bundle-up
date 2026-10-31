@@ -24,8 +24,10 @@ Theme: Ruby/Rails dependency health. Score-attack, 3 hearts, no backend.
   hitting the target → `★ BUNDLE UP! ★` banner, +1♥, +100 score, world
   re-seeds harder. R1: 6 deps/3 infected, no zombies. R2: 8 deps, 2
   zombies. R3+: trickle spawns, fuses shrink (24s→11s), zombies speed up.
-- **Exploded infected deps migrate** — a new infected dep spawns elsewhere
-  after ~0.6s, so you can't clear a level by neglect.
+- **Detonation counts progress** (threat resolved badly) but the primary
+  bomb costs −1♥ unless you're caught in the blast (that's already the
+  price). Chained pops don't re-charge. Replaced the earlier
+  migrate-on-detonate rule.
 - **Blast radius**: ragged ~3×3 crater; kills zombies (counts as patches);
   chain-detonates infected deps; destroys collateral good deps; strips
   racks/LEDs/crystals; bot caught in blast falls in (−1♥, scrambles out).

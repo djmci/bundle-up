@@ -143,7 +143,7 @@ export function makeDeps(scene, world, hud, ev) {
         if (od.state === 'infected') queue.push(od);
         else { ev.collateral?.(od); remove(od); }
       }
-      ev.exploded?.(cur, blast);
+      ev.exploded?.(cur, blast, depth === 1);
       remove(cur);
       blast.forEach(t => world.setCrater(t));
     }

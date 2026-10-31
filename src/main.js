@@ -135,7 +135,7 @@ const ev = {
   patched: d => { patches++; progress++; addScore(25); fx.burst(d.tile.x, 1.6, d.tile.z, 'teal', 14); fx.shake(.1); },
   zapped: z => { zaps++; progress++; addScore(15); fx.burst(z.x, 1.3, z.z, 'green', 12); fx.shake(.08); },
   infected: d => { fx.shake(.2); },
-  exploded: (d, blast) => {
+  exploded: (d, blast, primary) => {
     blast.forEach(t => {
       fx.burst(t.x, 1.1, t.z, 'amber', 6, 4);
       if (Math.random() < .5) fx.burst(t.x, 1.2, t.z, 'dark', 3, 2.5);
@@ -143,11 +143,9 @@ const ev = {
     fx.burst(d.tile.x, 1.4, d.tile.z, 'beige', 10, 4);
     fx.shake(.65);
     hud.commit(`revert: ${d.name} detonated`, 'warn');
-    // an exploded vulnerability migrates somewhere else on the deck
-    setTimeout(() => {
-      const nd = spawnDepNear(5, R_VIS * .8, { infected: true });
-      if (nd) hud.commit(`warn: vulnerability migrated to ${nd.name}`, 'warn');
-    }, 600);
+    // a detonation resolves the threat badly — counts toward clearing,
+    // but the primary bomb costs a heart. chained pops don't re-charge.
+    progress++;
     // zombies caught in the blast die — collateral patches
     for (const z of [...mobs.list])
       if (Math.hypot(z.x - d.tile.x, z.z - d.tile.z) < 2.0) mobs.zap(z);
@@ -164,6 +162,9 @@ const ev = {
         hud.commit('revert: fell into the crater', 'warn');
         if (left <= 0) gameOver();
       } else hurtBot('caught in the blast');
+    } else if (primary) {
+      // you let it ship — that costs a heart even at a safe distance
+      hurtBot(`let ${d.name} detonate`);
     }
   },
   collateral: d => hud.commit(`revert: ${d.name} lost in the blast`, 'warn'),
