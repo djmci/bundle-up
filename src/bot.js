@@ -18,8 +18,8 @@ function build() {
   add(.18, .3, .18, FM.botDark, -.12, .15, 0);   // legs
   add(.18, .3, .18, FM.botDark, .12, .15, 0);
   add(.5, .45, .34, FM.botBody, 0, .55, 0);      // torso
-  add(.12, .4, .12, FM.botBody, -.32, .6, .1);   // arms
-  add(.12, .4, .12, FM.botBody, .32, .6, .1);
+  const armL = add(.12, .4, .12, FM.botBody, -.32, .6, .1);
+  const armR = add(.12, .4, .12, FM.botBody, .32, .6, .1);
   const head = new THREE.Mesh(new THREE.BoxGeometry(.46, .46, .46),
     [FM.botBody, FM.botBody, FM.botBody, FM.botBody, FM.botFace, FM.botBody]);
   head.position.set(0, 1.05, 0);
@@ -29,11 +29,11 @@ function build() {
   const tip = new THREE.Mesh(new THREE.BoxGeometry(.1, .1, .1), FM.ledRed);
   tip.position.set(0, 1.55, 0);
   g.add(tip);
-  return { g, tip };
+  return { g, tip, armL, armR };
 }
 
 export function makeBot(scene, world) {
-  const { g, tip } = build();
+  const { g, tip, armL, armR } = build();
   scene.add(g);
 
   const bot = {
@@ -182,11 +182,19 @@ export function makeBot(scene, world) {
       if (j.channelLeft === undefined) { j.channelLeft = j.channel || 0; j.onArrive?.(); }
       if (j.channelLeft > 0) {
         j.channelLeft -= dt;
-        g.rotation.y = bot.heading + Math.sin(t * 25) * .15; // working wiggle
+        // typing frantically — arms pump alternately while channeling
+        armL.rotation.x = -1.15 + Math.max(0, Math.sin(t * 24)) * .55;
+        armR.rotation.x = -1.15 + Math.max(0, Math.sin(t * 24 + Math.PI)) * .55;
+        g.rotation.y = bot.heading;
       } else {
         bot.job = null;
         j.onDone?.();
       }
+    }
+    // relax arms back down when not channeling
+    if (!(bot.job && bot.job.channelLeft > 0)) {
+      armL.rotation.x *= Math.max(0, 1 - dt * 8);
+      armR.rotation.x *= Math.max(0, 1 - dt * 8);
     }
 
     const hop = bot.moving ? Math.abs(Math.sin(t * 10)) * .16 : Math.abs(Math.sin(t * 3)) * .04;

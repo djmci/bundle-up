@@ -273,4 +273,8 @@ footer a { color: #d9a066; }
   #logo { width: 200px; }
   h1 { font-size: 28px; }
   #subtitle { font-size: 14px; }
+  /* intro/game-over card — bigger on phones */
+  #overlay-card h2 { font-size: calc(38px*var(--uz,1)); }
+  #overlay-card p { font-size: calc(19px*var(--uz,1)); }
+  #overlay-card .btn { font-size: calc(19px*var(--uz,1)); padding: calc(15px*var(--uz,1)) calc(34px*var(--uz,1)); }
 }

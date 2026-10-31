@@ -262,9 +262,9 @@ function jobZombie(z) {
   const stand = t && standableNear(t);
   if (!stand) return;
   bot.setJob({
-    tile: stand, channel: 0,
-    onArrive() {
-      faceTo(z.x, z.z);
+    tile: stand, channel: .55,
+    onArrive() { faceTo(z.x, z.z); },
+    onDone() {
       // zap the nearest zombie in reach, whatever it is now
       let best = null, bd = 1.5;
       for (const zz of mobs.list) {
