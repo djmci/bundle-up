@@ -104,6 +104,17 @@ canvas {
   color: var(--cream);
 }
 #hearts { left: calc(16px*var(--uz,1)); top: calc(16px*var(--uz,1)); color: var(--red); letter-spacing: .15em; }
+#minimap {
+  position: absolute;
+  left: calc(16px*var(--uz,1));
+  top: calc(60px*var(--uz,1));
+  width: calc(104px*var(--uz,1));
+  height: calc(104px*var(--uz,1));
+  background: rgba(10,14,24,.72);
+  border: 1px solid rgba(244,236,221,.22);
+  border-radius: 50%;
+  image-rendering: pixelated;
+}
 #score { right: calc(16px*var(--uz,1)); top: calc(16px*var(--uz,1)); font-family: 'Press Start 2P', monospace; font-size: calc(11px*var(--uz,1)); }
 #release { right: calc(16px*var(--uz,1)); top: calc(58px*var(--uz,1)); font-family: 'Press Start 2P', monospace; font-size: calc(9px*var(--uz,1)); opacity: .85; }
 #hint { left: 50%; bottom: calc(22px*var(--uz,1)); transform: translateX(-50%); font-weight: 600; opacity: .9; white-space: nowrap; }
@@ -222,6 +233,7 @@ canvas {
   line-height: 1.7;
   color: #e8ddcd;
   margin-bottom: 18px;
+  max-width: calc(460px*var(--uz,1));
 }
 #overlay-card .btn { box-shadow: 0 4px 14px rgba(0,0,0,.3); margin: 0 4px; }
 

@@ -22,6 +22,32 @@ export function makeHud() {
     toast: document.getElementById('toast'),
   };
 
+  // ---- minimap radar under hearts ----
+  const mm = document.getElementById('minimap');
+  const mmG = mm.getContext('2d');
+  function minimap(bot, zombies, deps, bound) {
+    const W = mm.width, H = mm.height, cx = W / 2, cy = H / 2;
+    const s = (W / 2 - 4) / bound;
+    mmG.clearRect(0, 0, W, H);
+    // deck rim
+    mmG.strokeStyle = 'rgba(244,236,221,.35)';
+    mmG.lineWidth = 1;
+    mmG.beginPath(); mmG.arc(cx, cy, bound * s, 0, 7); mmG.stroke();
+    // deps: healthy dim teal, infected hot red squares
+    for (const d of deps) {
+      mmG.fillStyle = d.state === 'infected' ? '#ff2a00' : 'rgba(60,240,200,.45)';
+      mmG.fillRect(cx + d.tile.x * s - 1.5, cy + d.tile.z * s - 1.5, 3, 3);
+    }
+    // zombies: red dots, blinking via caller's clock
+    for (const z of zombies) {
+      mmG.fillStyle = '#ff5a4a';
+      mmG.beginPath(); mmG.arc(cx + z.x * s, cy + z.z * s, 2.2, 0, 7); mmG.fill();
+    }
+    // the bot: cream dot
+    mmG.fillStyle = '#f4ecdd';
+    mmG.beginPath(); mmG.arc(cx + bot.x * s, cy + bot.z * s, 2.6, 0, 7); mmG.fill();
+  }
+
   // ---- chips ----
   const setHearts = n => { el.hearts.textContent = n > 0 ? '♥ '.repeat(n).trim() : '× × ×'; };
   const setScore = n => { el.score.textContent = `SCORE ${String(n).padStart(4, '0')}`; };
@@ -113,5 +139,5 @@ export function makeHud() {
     toastT = setTimeout(() => el.toast.classList.add('hidden'), durS * 1000);
   }
 
-  return { el, setHearts, setScore, setRelease, commit, banner, tag, placeTags, popPx, showCard, hideCard, onCardBtn, onCardBtn2, dmgFlash, toast };
+  return { el, setHearts, setScore, setRelease, commit, banner, tag, placeTags, popPx, minimap, showCard, hideCard, onCardBtn, onCardBtn2, dmgFlash, toast };
 }

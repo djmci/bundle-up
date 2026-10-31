@@ -2,7 +2,7 @@
 
 import * as THREE from '../vendor/three.module.min.js';
 import { M, FM } from './textures.js';
-import { makeWorld, R_VIS } from './world.js';
+import { makeWorld, R_VIS, BOUND } from './world.js';
 import { makeBot } from './bot.js';
 import { makeDeps } from './deps.js';
 import { makeMobs } from './mobs.js';
@@ -497,8 +497,8 @@ hud.onCardBtn(() => {
 });
 hud.showCard({
   title: 'BUNDLE<br>UP!',
-  sub: 'Walk the deck. Bank rubies from the gem cores.<br>' +
-       'Patch what the CVE zombies infect — before it blows.<br>' +
+  sub: 'Walk the deck. Bank rubies from the gem cores. ' +
+       'Patch what the CVE zombies infect — before it blows. ' +
        'Leave the good boxes. They\'re fine.',
   btn: 'Start Patching',
 });
@@ -507,7 +507,7 @@ hud.showCard({
 const follow = new THREE.Vector3(0, .5, 0);
 const botV = new THREE.Vector3();
 const camPos = new THREE.Vector3();
-let last = 0;
+let last = 0, mmT = 0;
 
 renderer.setAnimationLoop((ms) => {
   const t = ms / 1000;
@@ -550,6 +550,8 @@ renderer.setAnimationLoop((ms) => {
   // keep the light rig glued to the camera direction so shadows stay put
 
   fx.update(dt);
+  mmT -= dt;
+  if (mmT <= 0) { mmT = .15; hud.minimap(bot, mobs.list, deps.list, BOUND); }
   hud.placeTags(camera, SCENE_W, SCENE_H);
   renderer.render(scene, camera);
 });
