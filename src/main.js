@@ -163,8 +163,10 @@ const ev = {
         if (left <= 0) gameOver();
       } else hurtBot('caught in the blast');
     } else if (primary) {
-      // you let it ship — that costs a heart even at a safe distance
-      hurtBot(`let ${d.name} detonate`);
+      // you let it ship — −100 points even at a safe distance
+      score = Math.max(0, score - 100);
+      hud.setScore(score);
+      hud.commit(`revert: let ${d.name} detonate — −100`, 'warn');
     }
   },
   collateral: d => hud.commit(`revert: ${d.name} lost in the blast`, 'warn'),

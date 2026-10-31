@@ -25,9 +25,9 @@ Theme: Ruby/Rails dependency health. Score-attack, 3 hearts, no backend.
   re-seeds harder. R1: 6 deps/3 infected, no zombies. R2: 8 deps, 2
   zombies. R3+: trickle spawns, fuses shrink (24s→11s), zombies speed up.
 - **Detonation counts progress** (threat resolved badly) but the primary
-  bomb costs −1♥ unless you're caught in the blast (that's already the
-  price). Chained pops don't re-charge. Replaced the earlier
-  migrate-on-detonate rule.
+  bomb costs −100 pts unless you're caught in the blast (that already
+  costs a heart via the fall). Chained pops don't re-charge. Replaced
+  the earlier migrate-on-detonate rule; penalty tuned from −1♥ → −100.
 - **Blast radius**: ragged ~3×3 crater; kills zombies (counts as patches);
   chain-detonates infected deps; destroys collateral good deps; strips
   racks/LEDs/crystals; bot caught in blast falls in (−1♥, scrambles out).
