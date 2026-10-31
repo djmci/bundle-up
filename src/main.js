@@ -1,7 +1,7 @@
 // main.js — boot, viewport, camera, picking, wave scheduler, states.
 
 import * as THREE from '../vendor/three.module.min.js';
-import { M, FM } from './textures.js';
+import { FM } from './textures.js';
 import { makeWorld, R_VIS, BOUND } from './world.js';
 import { makeBot } from './bot.js';
 import { makeDeps } from './deps.js';
@@ -173,6 +173,7 @@ const ev = {
     hurtBot(`bitten by ${z.cve}`);
   },
   fellOff: z => {
+    progress++;   // off the deck = out of the picture
     fx.burst(z.x, .8, z.z, 'green', 6, 2);
     hud.commit(`revert: ${z.cve} fell off the deck`, 'dim');
   },
@@ -188,7 +189,11 @@ world.onTileSpawn = t => {
       Math.hypot(t.x - bot.x, t.z - bot.z) > 3 && Math.random() < .06)
     deps.spawn(t);
 };
-world.onTileDespawn = t => { if (t.dep) deps.remove(t.dep); };
+world.onTileDespawn = t => {
+  // an infected dep rotating out counts as resolved — otherwise a
+  // despawned threat can make fixTarget unreachable and stall the level
+  if (t.dep) { if (t.dep.state === 'infected') progress++; deps.remove(t.dep); }
+};
 
 world.init(bot);
 hud.setHearts(3); hud.setScore(0); hud.setRelease(1);

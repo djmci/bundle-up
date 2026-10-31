@@ -127,7 +127,7 @@ export function makeWorld(scene) {
     onTileDespawn(t);
     if (t.rack) { props.remove(t.rack); t.rack = null; }
     if (t.led) { props.remove(t.led); t.led = null; }
-    t.crystals.forEach(c => props.remove(c));
+    t.crystals.forEach(c => dropCrystal(c));
     t.crystals.length = 0;
     tiles.delete(key(t.gx, t.gz));
     const ch = chunkFor(t.gx, t.gz);
@@ -248,18 +248,23 @@ export function makeWorld(scene) {
   }
 
   // ---- gameplay helpers ----
+  function dropCrystal(c) {
+    props.remove(c);
+    const i = crystalAll.indexOf(c);
+    if (i >= 0) crystalAll.splice(i, 1);
+  }
   function setCrater(t) {
     if (t.kind === 'crater') return;
     t.kind = 'crater'; t.healT = 15; t.blocked = true;
     if (t.rack) { props.remove(t.rack); t.rack = null; }
     if (t.led) { props.remove(t.led); t.led = null; }
-    t.crystals.forEach(c => props.remove(c));
+    t.crystals.forEach(c => dropCrystal(c));
     t.crystals.length = 0;
     dirtyAround(t.gx, t.gz); rebuildDirty();
   }
   function harvest(t) {
     const n = t.crystals.length;
-    t.crystals.forEach(c => { props.remove(c); const i = crystalAll.indexOf(c); if (i >= 0) crystalAll.splice(i, 1); });
+    t.crystals.forEach(c => dropCrystal(c));
     t.crystals.length = 0;
     t.grow = 6 + rnd() * 6;
     return n;
