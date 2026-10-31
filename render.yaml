@@ -1,0 +1,5 @@
+services:
+  - type: web
+    name: bundle-up
+    runtime: static
+    staticPublishPath: .

@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Bundle Up! — Red Ant · visual mock</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Press+Start+2P&display=swap">
+<style>
+:root { --red:#ff2a00; --cream:#f4ecdd; --ink:#000; }
+* { box-sizing:border-box; margin:0; padding:0; }
+html,body { min-height:100%; background:var(--ink); font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; color:#f5efe8; }
+body { background-image:url("ant-trail.svg"); background-repeat:no-repeat; background-position:center top; background-size:cover; background-attachment:fixed; }
+#app { min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:0 14px; }
+header { display:flex; flex-direction:column; align-items:center; gap:10px; padding:30px 0 18px; }
+#logo { width:280px; max-width:60vw; display:block; }
+h1 { font-family:Montserrat,sans-serif; font-size:42px; font-weight:800; letter-spacing:-0.02em; color:var(--cream); text-align:center; margin-top:8px; }
+h1 em { font-style:normal; color:var(--red); }
+#subtitle { font-family:Montserrat,sans-serif; font-size:15px; color:var(--cream); text-align:center; }
+#stage-wrap { transform-origin:top center; }
+#stage { position:relative; width:1200px; height:760px; border-radius:14px; overflow:hidden; background:#000; }
+canvas { position:absolute; inset:0; width:100%; height:100%; display:block; touch-action:none; image-rendering:pixelated; }
+#hud { position:absolute; inset:0; pointer-events:none; font-family:Montserrat,sans-serif; }
+.chip { position:absolute; background:rgba(10,14,24,.72); border:1px solid rgba(244,236,221,.22); border-radius:999px; padding:calc(8px*var(--uz,1)) calc(16px*var(--uz,1)); font-size:calc(15px*var(--uz,1)); font-weight:700; color:var(--cream); }
+#hearts { left:calc(16px*var(--uz,1)); top:calc(16px*var(--uz,1)); color:var(--red); letter-spacing:.15em; }
+#score { right:calc(16px*var(--uz,1)); top:calc(16px*var(--uz,1)); font-family:'Press Start 2P',monospace; font-size:calc(11px*var(--uz,1)); }
+#release { right:calc(16px*var(--uz,1)); top:calc(58px*var(--uz,1)); font-family:'Press Start 2P',monospace; font-size:calc(9px*var(--uz,1)); opacity:.85; }
+#hint { left:50%; bottom:calc(22px*var(--uz,1)); transform:translateX(-50%); font-weight:600; opacity:.9; white-space:nowrap; }
+/* world-anchored labels — DOM so they stay crisp over the pixelated canvas */
+.tag { position:absolute; transform:translate(-50%,-100%); background:#10141c; border:calc(2px*var(--uz,1)) solid var(--red); color:var(--cream); font-family:'Press Start 2P',monospace; font-size:calc(9px*var(--uz,1)); padding:calc(7px*var(--uz,1)) calc(10px*var(--uz,1)); white-space:nowrap; }
+.tag.lock { border-color:var(--cream); }
+/* git-commit toast — bottom left, monospace, slides in */
+#ctoast { position:absolute; left:calc(16px*var(--uz,1)); bottom:calc(22px*var(--uz,1)); background:#10141c; border:calc(2px*var(--uz,1)) solid #3cf0c8; color:#3cf0c8; font-family:'Press Start 2P',monospace; font-size:calc(8px*var(--uz,1)); padding:calc(9px*var(--uz,1)) calc(12px*var(--uz,1)); white-space:nowrap; opacity:0; transition:opacity .25s ease; }
+#ctoast.on { opacity:1; }
+#ctoast .dim { color:#8a93a5; }
+/* CVE warning banner — top centre, flashing */
+#cve { position:absolute; left:50%; top:calc(16px*var(--uz,1)); transform:translateX(-50%); background:var(--red); color:#fff; font-family:'Press Start 2P',monospace; font-size:calc(10px*var(--uz,1)); padding:calc(10px*var(--uz,1)) calc(18px*var(--uz,1)); white-space:nowrap; animation:cveflash .5s steps(2) infinite; }
+#cve.hidden { display:none; }
+@keyframes cveflash { 50% { background:#8a1500; } }
+#overlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(10,8,6,.35); }
+#overlay.hidden { display:none; }
+#card { text-align:center; }
+#card h2 { font-family:Montserrat,sans-serif; font-size:calc(34px*var(--uz,1)); font-weight:800; color:var(--cream); text-shadow:0 2px 8px rgba(0,0,0,.4); margin-bottom:8px; }
+#card p { font-size:calc(14px*var(--uz,1)); color:#e8ddcd; margin-bottom:16px; }
+.btn { appearance:none; border:0; border-radius:calc(10px*var(--uz,1)); background:var(--red); color:#fff; font:inherit; font-weight:700; font-size:calc(15px*var(--uz,1)); padding:calc(12px*var(--uz,1)) calc(28px*var(--uz,1)); cursor:pointer; }
+.btn:hover { background:#ff4520; }
+footer { padding:16px 4px 20px; font-size:12px; color:#8a7a6d; text-align:center; }
+footer a { color:#d9a066; }
+@media (max-width:640px){ header{padding:20px 0 12px;gap:8px;} #logo{width:200px;} h1{font-size:28px;} #subtitle{font-size:14px;} }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <img id="logo" src="redant-logo.svg" alt="Red Ant">
+    <h1>Bundle <em>Up!</em></h1>
+    <p id="subtitle">A tiny farming toy about keeping your gems fresh. CVEs are zombies. Old versions are bombs.</p>
+  </header>
+  <div id="stage-wrap">
+    <div id="stage">
+      <canvas id="c"></canvas>
+      <div id="hud">
+        <div class="chip" id="hearts">♥ ♥ ♥</div>
+        <div class="chip" id="score">RUBIES ×12</div>
+        <div class="chip" id="release">RELEASE 3</div>
+        <div class="chip" id="hint">tap a tile to move · tap a zombie or legacy box when close</div>
+        <div id="cve" class="hidden">!! CVE-2026-24402 INCOMING !!</div>
+        <div id="ctoast"></div>
+      </div>
+      <div id="overlay">
+        <div id="card">
+          <h2>VISUAL MOCK</h2>
+          <p>v3 — brighter palette, hi-res pixel textures,<br>crisp labels, and a little bot for a player.</p>
+          <button class="btn" id="go">Start Farming</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer>
+    <span>Bundle Up! — a <a href="https://redant.com.au">Red Ant</a> experiment, built with AI · visual mock</span>
+  </footer>
+</div>
+
+<script type="module">
+import * as THREE from './vendor/three.module.min.js';
+
+// ---------- viewport: fixed logical stage, css-scaled (same as xmas) ----------
+const SCENE_W = 1200, SCENE_H = 760;
+const stageWrap = document.getElementById('stage-wrap');
+const stageEl = document.getElementById('stage');
+const hud = document.getElementById('hud');
+const canvas = document.getElementById('c');
+let dpr = 1;
+
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:false });
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.BasicShadowMap;   // hard shadows = retro
+const PX = 1.9; // crunch dial — lower = cleaner edges, textures stay pixel-crisp
+
+const scene = new THREE.Scene();
+// sky: day gradient — cream horizon into light blue
+{
+  const g = document.createElement('canvas'); g.width = 2; g.height = 128;
+  const c = g.getContext('2d');
+  const gr = c.createLinearGradient(0,128,0,0);
+  gr.addColorStop(0, '#f0dcc0'); gr.addColorStop(.45, '#b8d8ec'); gr.addColorStop(1, '#7ab8dd');
+  c.fillStyle = gr; c.fillRect(0,0,2,128);
+  const t = new THREE.CanvasTexture(g); t.colorSpace = THREE.SRGBColorSpace;
+  scene.background = t;
+}
+scene.fog = new THREE.Fog(0xd8e4ea, 34, 70);
+
+const camera = new THREE.OrthographicCamera(-1,1,1,-1,0.1,100);
+const camDir = new THREE.Vector3(1, 0.82, 1).normalize(); // dimetric-ish
+
+function resize() {
+  dpr = Math.min(2, window.devicePixelRatio || 1);
+  const availW = document.getElementById('app').clientWidth - 28;
+  const s = Math.min(1, availW / SCENE_W);
+  stageWrap.style.transform = `scale(${s})`;
+  stageWrap.style.height = `${SCENE_H * s}px`;
+  stageEl.style.setProperty('--uz', Math.min(2, 1/s).toFixed(3));
+  renderer.setSize(Math.round(SCENE_W/PX), Math.round(SCENE_H/PX), false);
+  const viewH = 15;
+  const aspect = SCENE_W / SCENE_H;
+  camera.left = -viewH*aspect/2; camera.right = viewH*aspect/2;
+  camera.top = viewH/2; camera.bottom = -viewH/2;
+  camera.position.copy(camDir).multiplyScalar(30);
+  camera.lookAt(0,0.5,0);
+  camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', resize);
+
+// ---------- pixel textures: char map + palette, now at 16x16 for detail ----------
+function tex(map, pal) {
+  const cv = document.createElement('canvas'); cv.width = map[0].length; cv.height = map.length;
+  const g = cv.getContext('2d');
+  map.forEach((row, r) => { for (let c = 0; c < row.length; c++) {
+    const col = pal[row[c]]; if (!col) continue;
+    g.fillStyle = col; g.fillRect(c, r, 1, 1);
+  }});
+  const t = new THREE.CanvasTexture(cv);
+  t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestFilter;
+  t.generateMipmaps = false; t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+function speck(base, dots, size=16, seed=7) {
+  const cv = document.createElement('canvas'); cv.width = size; cv.height = size;
+  const g = cv.getContext('2d');
+  g.fillStyle = base; g.fillRect(0,0,size,size);
+  let sd = seed; const rnd = () => (sd = (sd*16807)%2147483647)/2147483647;
+  dots.forEach(([col, n]) => { for (let i=0;i<n;i++) { g.fillStyle = col; g.fillRect(rnd()*size|0, rnd()*size|0, 1, 1); }});
+  const t = new THREE.CanvasTexture(cv);
+  t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestFilter;
+  t.generateMipmaps = false; t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+const T = {
+  // raised DC floor tile — light slab, dark seams, corner bolts, one LED
+  floorTop : tex([
+    'SSSSSSSSSSSSSSSS',
+    'SPPPPPPPPPPPPPPS',
+    'SPPPPBPPPPPPPPPS',
+    'SPPPPPPPPPPPBPPP',
+    'SPPPPPPPPPPPPPPS',
+    'SPBPPPPPPPPPPPPS',
+    'SPPPPPPPLPPPPPPS',
+    'SPPPPPPPPPPPPPPS',
+    'SPPPPPPPPPPPPBPS',
+    'SPPPPBPPPPPPPPPS',
+    'SPPPPPPPPPPPPPPS',
+    'SPPPPPPPPPBPPPPS',
+    'SPPPPPPPPPPPPPPS',
+    'SPPBPPPPPPPPPPPS',
+    'SPPPPPPPPPPPPPPS',
+    'SSSSSSSSSSSSSSSS',
+  ], {S:'#8f96a4', P:'#b8bec9', B:'#9aa1ae', L:'#3cf0c8'}),
+  floorSide: tex([
+    'SSSSSSSSSSSSSSSS',
+    'SVVVVVVVSSVVVVVS',
+    'SVVVVVVVSSVVVVVS',
+    'SSSSSSSSSSSSSSSS',
+    'SSSSSSSSSSSSSSSS',
+    'SSSSSSSSSSSSSSSS',
+    'SSSSSSSSSSSSSSSS',
+    'HHHHHHHHHHHHHHHH',
+  ], {S:'#7a8190', V:'#5f6673', H:'#ff2a00'}),
+  hull     : speck('#6a7282', [['#596171',14],['#7a8292',12]], 16, 7),
+  hullDeep : speck('#4a5160', [['#3a4050',12],['#5a6170',8]], 16, 13),
+  // gem core pad — light tile, red cores, teal ring
+  coreTop  : tex([
+    'RRRRRRRRRRRRRRRR',
+    'RPPPPPPPPPPPPPPR',
+    'RPPPPPPRRPPPPPPR',
+    'RPPPPRRRRPPPPPPR',
+    'RPPPPPPRRPPPPRPR',
+    'RPPPPPPPPPPRRRPR',
+    'RPPRPPPPPPPRRRPR',
+    'RPRRRPPPPPPPRPPR',
+    'RPRRRPPPPRPPPPPR',
+    'RPPPPPPPPRRRPPPR',
+    'RPPPPRPPPRRRPPPR',
+    'RPPPRRRPPPPRPPPR',
+    'RPPPPRRPPPPPPPPR',
+    'RPPPPPPPPPPPPPPR',
+    'RPPPPPPPPPPPPPPR',
+    'RRRRRRRRRRRRRRRR',
+  ], {R:'#ff2a30', P:'#b8bec9'}),
+  coreSide : T => T, // placeholder, set below
+  // legacy beige tower — floppy slot, vents, green power LED, amber fault
+  legacy   : tex([
+    'BBBBBBBBBBBBBBBB',
+    'BBDDDDDDDDBBGBBB',
+    'BBDDDDDDDDBBBBBB',
+    'BBBBBBBBBBBBBBBB',
+    'BBFFFFFFFFFFFFBB',
+    'BBBBBBBBBBBBBBBB',
+    'BBVVVVVVVVVVVVBB',
+    'BBVVVVVVVVVVVVBB',
+    'BBBBBBBBBBBBBBBB',
+    'BBVVVVVVVVVVVVBB',
+    'BBVVVVVVVVVVVVBB',
+    'BBBBBBBBBBBBBBBB',
+    'BBDDDDDDBBAAAAAB',
+    'BBDDDDDDBBAAAAAB',
+    'BBBBBBBBBBBBBBBB',
+    'BBBBBBBBBBBBBBBB',
+  ], {B:'#c8b898', D:'#8a7a5c', G:'#7ac86a', F:'#5a4f3a', V:'#a89878', A:'#ff9a2a'}),
+  // fresh rack — dark, teal LEDs
+  fresh    : tex([
+    'KKKKKKKKKKKKKKKK',
+    'KGGKGGKGGKGGKGKK',
+    'KKKKKKKKKKKKKKKK',
+    'KKGKKGGKGGKGGKKK',
+    'KKKKKKKKKKKKKKKK',
+    'KGGKGGKGGKGGKGKK',
+    'KKKKKKKKKKKKKKKK',
+    'KKKKKKKKKKKKKKKK',
+  ], {K:'#232a36', G:'#3cf0c8'}),
+  // vault — light slab, red lock glyph
+  lock     : tex([
+    'CCCCCCCCCCCCCCCC',
+    'CWWWWWWWWWWWWWCC',
+    'CWWKKKKKKKKWWCCC',
+    'CWWKKKKKKKKWWCCC',
+    'CWWKKKWWKKKWWCCC',
+    'CWWWWWWWWWWWWCCC',
+    'CWWWWWKKWWWWWCCC',
+    'CWWWWWKKWWWWWCCC',
+    'CWWWWWWWWWWWWCCC',
+    'CWWWWWWWWWWWWCCC',
+    'CCCCCCCCCCCCCCCC',
+    'CCCCCCCCCCCCCCCC',
+    'CRRRRRRRRRRRRRCC',
+    'CRRRRRRRRRRRRRCC',
+    'CCCCCCCCCCCCCCCC',
+    'CCCCCCCCCCCCCCCC',
+  ], {C:'#c9ced8', W:'#f4ecdd', K:'#54452c', R:'#ff2a00'}),
+};
+T.coreSide = tex([
+  'HHHHHHHHHHHHHHHH',
+  'HHHHHHHHHHHHHHHH',
+  'SPPPPPPPPPPPPPPS',
+  'SPPPPPPPPPPPPPPS',
+  'SPPPRPPPPPRPPPPS',
+  'SSSSSSSSSSSSSSSS',
+  'SSSSSSSSSSSSSSSS',
+  'SSSSSSSSSSSSSSSS',
+], {H:'#ff2a00', P:'#8f96a4', S:'#7a8190', R:'#ff2a30'});
+
+const M = {};
+for (const k in T) M[k] = new THREE.MeshLambertMaterial({map:T[k]});
+
+const box = new THREE.BoxGeometry(1,1,1);
+function block(top, side, bottom) {
+  const m = new THREE.Mesh(box, [side, side, top, bottom||side, side, side]);
+  m.castShadow = true; m.receiveShadow = true;
+  return m;
+}
+
+// ---------- the platform ----------
+const island = new THREE.Group(); scene.add(island);
+const N = 11, R = 5.3;
+let sd = 42; const rnd = () => (sd = (sd*16807)%2147483647)/2147483647;
+const tops = [];
+for (let gx = 0; gx < N; gx++) for (let gz = 0; gz < N; gz++) {
+  const x = gx - (N-1)/2, z = gz - (N-1)/2;
+  const r = Math.hypot(x, z);
+  if (r > R + rnd()*0.4 - 0.2) continue;
+  const h = 1;
+  const depth = 2 + Math.max(0, Math.round((1 - r/R) * 3));
+  for (let y = h; y > h - depth; y--) {
+    let m;
+    if (y === h) m = block(M.floorTop, M.floorSide);
+    else if (y > h - 3) m = block(M.hull, M.hull);
+    else m = block(M.hullDeep, M.hullDeep);
+    m.position.set(x, y, z);
+    island.add(m);
+  }
+  tops.push({x, z, y:h});
+}
+
+// red underglow ring below the hull
+{
+  const glow = new THREE.Mesh(new THREE.BoxGeometry(10.6,.12,10.6),
+    new THREE.MeshBasicMaterial({color:0xff2a00}));
+  glow.position.y = -1.6; island.add(glow);
+}
+
+// blinking edge LEDs
+const leds = [];
+tops.forEach((t,i) => {
+  if (i % 6 !== 0) return;
+  const led = new THREE.Mesh(new THREE.BoxGeometry(.1,.1,.1),
+    new THREE.MeshBasicMaterial({color: i%12 ? 0x3cf0c8 : 0xff2a00}));
+  led.position.set(t.x+.45, t.y+.5, t.z+.45);
+  leds.push({led, ph: rnd()*6}); island.add(led);
+});
+
+// decorative server racks
+const rackSpots = [[2,2],[8,5],[2,8],[9,7]];
+rackSpots.forEach(([gx,gz]) => {
+  const x = gx-(N-1)/2, z = gz-(N-1)/2;
+  const top = tops.find(t => t.x===x && t.z===z); if (!top) return;
+  const r = new THREE.Mesh(new THREE.BoxGeometry(.8,1.4,.8), M.rack || M.fresh);
+  r.position.set(x, top.y+.5+.7, z); r.castShadow = true; island.add(r);
+  const tip = new THREE.Mesh(new THREE.BoxGeometry(.12,.12,.12),
+    new THREE.MeshBasicMaterial({color:0xff2a00}));
+  tip.position.set(x, top.y+1.98, z); leds.push({led:tip, ph:rnd()*6}); island.add(tip);
+});
+
+// gem cores + ruby crystals
+const crystals = [];
+tops.forEach((t, i) => {
+  if (Math.hypot(t.x,t.z) < 1.6 || i % 7 !== 2) return;
+  const b = block(M.coreTop, M.coreSide);
+  b.position.set(t.x, t.y + .51, t.z);
+  b.scale.set(.96,.2,.96);
+  island.add(b);
+  const n = 2 + (i % 3);
+  for (let k = 0; k < n; k++) {
+    const c = new THREE.Mesh(new THREE.BoxGeometry(.16,.3,.16),
+      new THREE.MeshLambertMaterial({color:0xff2a30, emissive:0x771111}));
+    c.position.set(t.x + (rnd()-.5)*.6, t.y + .75, t.z + (rnd()-.5)*.6);
+    c.rotation.y = rnd()*3;
+    crystals.push(c); island.add(c);
+  }
+});
+
+// centre stash: vault + Gemfile.lock
+{
+  const p = block(M.lock, M.lock); p.scale.set(1.6,.6,1.6); p.position.y = 1.6; island.add(p);
+  const ring = new THREE.Mesh(new THREE.BoxGeometry(2.2,.08,2.2),
+    new THREE.MeshBasicMaterial({color:0xff2a00}));
+  ring.position.y = 1.24; island.add(ring);
+  for (let k = 0; k < 6; k++) {
+    const c = new THREE.Mesh(new THREE.BoxGeometry(.2,.4,.2),
+      new THREE.MeshLambertMaterial({color:0xff2a30, emissive:0x771111}));
+    const a = k/6 * Math.PI*2;
+    c.position.set(Math.cos(a)*1.7, 1.7, Math.sin(a)*1.7);
+    island.add(c);
+  }
+}
+
+// ---------- DOM labels (crisp over the pixel canvas) ----------
+const tags = [];
+function tag(text, worldPos, cls='') {
+  const el = document.createElement('div');
+  el.className = 'tag ' + cls; el.textContent = text;
+  hud.appendChild(el);
+  tags.push({el, worldPos});
+  return el;
+}
+tag('Gemfile.lock', new THREE.Vector3(0, 3.4, 0), 'lock');
+
+// ---------- legacy boxes (bombs) ----------
+const bombs = [];
+[[3,4,'nokogiri 1.10.0'],[7,2,'rails 3.2.22'],[6,8,'rack 1.6.13']].forEach(([gx,gz,name]) => {
+  const x = gx-(N-1)/2, z = gz-(N-1)/2;
+  const top = tops.find(t => t.x===x && t.z===z); if (!top) return;
+  const b = new THREE.Mesh(new THREE.BoxGeometry(.7,1.0,.7), M.legacy);
+  b.position.set(x, top.y+1.0, z); b.castShadow = true; island.add(b);
+  const spark = new THREE.Mesh(new THREE.BoxGeometry(.12,.12,.12),
+    new THREE.MeshBasicMaterial({color:0xff9a2a}));
+  spark.position.set(x, top.y+1.6, z); island.add(spark);
+  const wp = new THREE.Vector3(x, top.y+2.3, z);
+  const l = tag(name, wp, 'dep');
+  bombs.push({b, spark, l, ph: rnd()*6, wp});
+});
+
+// ---------- CVE zombies ----------
+function faceTex() {
+  const cv = document.createElement('canvas'); cv.width = 16; cv.height = 16;
+  const g = cv.getContext('2d');
+  g.fillStyle = '#4a8f3c'; g.fillRect(0,0,16,16);
+  g.fillStyle = '#3c7a30'; g.fillRect(0,0,16,2);
+  g.fillStyle = '#5aa04a'; g.fillRect(2,4,3,2); g.fillRect(11,4,3,2);
+  g.fillStyle = '#1c2418'; g.fillRect(2,5,3,3); g.fillRect(11,5,3,3); // eyes
+  g.fillRect(6,10,4,2);                                              // mouth
+  g.fillStyle = '#3c7a30'; g.fillRect(5,12,2,2); g.fillRect(9,12,2,2);// chin
+  const t = new THREE.CanvasTexture(cv);
+  t.magFilter = THREE.NearestFilter; t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+function zombie() {
+  const g = new THREE.Group();
+  const skin = new THREE.MeshLambertMaterial({color:0x4a8f3c});
+  const face = new THREE.MeshLambertMaterial({map:faceTex()});
+  const shirt = new THREE.MeshLambertMaterial({color:0x353d4d});
+  const pants = new THREE.MeshLambertMaterial({color:0x232936});
+  const add = (w,h,d,mat,x,y,z) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat);
+    m.position.set(x,y,z); m.castShadow = true; g.add(m); return m;
+  };
+  add(.22,.42,.22, pants, -.14,.21,0);
+  add(.22,.42,.22, pants,  .14,.21,0);
+  add(.56,.5,.3, shirt, 0,.67,0);
+  add(.15,.5,.15, skin, -.22,.72,.34).rotation.x = Math.PI/2;
+  add(.15,.5,.15, skin,  .22,.72,.34).rotation.x = Math.PI/2;
+  const head = new THREE.Mesh(new THREE.BoxGeometry(.5,.5,.5),
+    [skin,skin,skin,skin,face,skin]);
+  head.position.set(0,1.18,0); head.castShadow = true; g.add(head);
+  const w = new THREE.Mesh(new THREE.BoxGeometry(.1,.1,.1),
+    new THREE.MeshBasicMaterial({color:0xff2a00}));
+  w.position.set(0,1.5,0); g.add(w);
+  return g;
+}
+const zombies = [];
+[[8,8],[1,6],[5,0]].forEach(([gx,gz]) => {
+  const x = gx-(N-1)/2, z = gz-(N-1)/2;
+  const top = tops.find(t => t.x===x && t.z===z); if (!top) return;
+  const zm = zombie();
+  zm.position.set(x, top.y+.5, z);
+  zm.lookAt(0, top.y+.5, 0);
+  zombies.push({zm, top, ph: rnd()*6});
+  scene.add(zm);
+});
+
+// ---------- the player: a little Bundler bot ----------
+function bundler() {
+  const g = new THREE.Group();
+  const body = new THREE.MeshLambertMaterial({color:0xf4ecdd});   // cream
+  const dark = new THREE.MeshLambertMaterial({color:0x232936});
+  const add = (w,h,d,mat,x,y,z) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat);
+    m.position.set(x,y,z); m.castShadow = true; g.add(m); return m;
+  };
+  add(.18,.3,.18, dark, -.12,.15,0);         // legs
+  add(.18,.3,.18, dark,  .12,.15,0);
+  add(.5,.45,.34, body, 0,.55,0);            // torso
+  add(.12,.4,.12, body, -.32,.6,.1);         // arm L
+  add(.12,.4,.12, body,  .32,.6,.1);         // arm R
+  // head with cyan visor face
+  const cv = document.createElement('canvas'); cv.width = 16; cv.height = 16;
+  const gg = cv.getContext('2d');
+  gg.fillStyle = '#f4ecdd'; gg.fillRect(0,0,16,16);
+  gg.fillStyle = '#232936'; gg.fillRect(1,4,14,6);
+  gg.fillStyle = '#3cf0c8'; gg.fillRect(3,6,3,2); gg.fillRect(10,6,3,2);
+  gg.fillStyle = '#c9b892'; gg.fillRect(6,12,4,1);
+  const ft = new THREE.CanvasTexture(cv);
+  ft.magFilter = THREE.NearestFilter; ft.colorSpace = THREE.SRGBColorSpace;
+  const faceM = new THREE.MeshLambertMaterial({map:ft});
+  const head = new THREE.Mesh(new THREE.BoxGeometry(.46,.46,.46),
+    [body,body,body,body,faceM,body]);
+  head.position.set(0,1.05,0); head.castShadow = true; g.add(head);
+  // antenna + red tip
+  add(.05,.22,.05, dark, 0,1.38,0);
+  const tip = new THREE.Mesh(new THREE.BoxGeometry(.1,.1,.1),
+    new THREE.MeshBasicMaterial({color:0xff2a00}));
+  tip.position.set(0,1.55,0); g.add(tip);
+  leds.push({led:tip, ph:0});
+  return g;
+}
+const bot = bundler();
+bot.position.set(0, 1.5, 2.5);
+bot.rotation.y = Math.PI*.8;
+scene.add(bot);
+
+// ---------- voxel clouds ----------
+const clouds = [];
+for (let i = 0; i < 4; i++) {
+  const c = new THREE.Group();
+  const mat = new THREE.MeshLambertMaterial({color:0xfdfbf4});
+  const n = 3 + (i%3);
+  for (let k = 0; k < n; k++) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(1.6+rnd()*1.4,.5,1+rnd()*.8), mat);
+    m.position.set(k*1.3 - n*.6, rnd()*.3, rnd()*.8);
+    c.add(m);
+  }
+  c.position.set(-14 + i*8 + rnd()*3, 6.5 + rnd()*2.5, -6 + rnd()*10);
+  clouds.push(c); scene.add(c);
+}
+
+// ---------- drifting packets ----------
+const motes = [];
+for (let i = 0; i < 14; i++) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(.08,.08,.08),
+    new THREE.MeshBasicMaterial({color: i%3 ? 0x3cf0c8 : 0xff2a00, transparent:true}));
+  m.position.set((rnd()-.5)*10, 1.5+rnd()*5, (rnd()-.5)*10);
+  motes.push({m, v:.3+rnd()*.5, ph:rnd()*6}); scene.add(m);
+}
+
+// ---------- lights ----------
+scene.add(new THREE.HemisphereLight(0xeaf4ff, 0x8a7a68, .95));
+const sun = new THREE.DirectionalLight(0xfff0d8, 1.15);
+sun.position.set(8, 14, 5);
+sun.castShadow = true;
+sun.shadow.mapSize.set(1024, 1024);
+const sc = 11;
+sun.shadow.camera.left = -sc; sun.shadow.camera.right = sc;
+sun.shadow.camera.top = sc; sun.shadow.camera.bottom = -sc;
+sun.shadow.camera.far = 40;
+scene.add(sun);
+const rim = new THREE.DirectionalLight(0x8fb8dd, .2);
+rim.position.set(-8, 6, -10); scene.add(rim);
+
+// ---------- DOM label projection ----------
+const v3 = new THREE.Vector3();
+function placeTags() {
+  tags.forEach(t => {
+    // proximity: dep tags only appear when the bot walks up to them
+    if (t.el.classList.contains('dep')) {
+      const near = bot.position.distanceTo(t.worldPos) < 4.2;
+      t.el.style.display = near ? 'block' : 'none';
+      if (!near) return;
+    }
+    v3.copy(t.worldPos).project(camera);
+    t.el.style.left = `${(v3.x*.5+.5)*SCENE_W}px`;
+    t.el.style.top  = `${(-v3.y*.5+.5)*SCENE_H}px`;
+  });
+}
+
+// ---------- loop ----------
+let botPh = 0;
+renderer.setAnimationLoop((ms) => {
+  const t = ms/1000;
+  zombies.forEach(z => {
+    z.zm.position.y = z.top.y + .5 + Math.abs(Math.sin(t*4 + z.ph))*.12;
+    z.zm.rotation.z = Math.sin(t*4 + z.ph)*.06;
+  });
+  bombs.forEach(b => {
+    b.spark.visible = Math.sin(t*9 + b.ph) > .2;
+    b.wp.y = 2.3 + b.b.position.y - 1 + Math.sin(t*2 + b.ph)*.06; // tag bob
+  });
+  // mock patrol: bot circles the stash so proximity tags pop in/out
+  const bx = Math.cos(t*.22)*3.4, bz = Math.sin(t*.22)*3.4;
+  bot.position.x = bx; bot.position.z = bz;
+  bot.position.y = 1.5 + Math.abs(Math.sin(t*6))*.1;
+  bot.rotation.y = Math.atan2(Math.cos(t*.22), -Math.sin(t*.22));
+  leds.forEach(l => { l.led.visible = Math.sin(t*3 + l.ph) > -.4; });
+  motes.forEach(p => {
+    p.m.position.y += p.v * .008;
+    p.m.material.opacity = .4 + .4*Math.sin(t*2 + p.ph);
+    if (p.m.position.y > 8) p.m.position.y = 1.5;
+  });
+  clouds.forEach(c => { c.position.x += .005; if (c.position.x > 18) c.position.x = -18; });
+  crystals.forEach(c => { c.rotation.y += .01; });
+  placeTags();
+  renderer.render(scene, camera);
+});
+
+// ---------- mock UI beats: commit toast + CVE banner ----------
+const ctoast = document.getElementById('ctoast');
+const cveEl = document.getElementById('cve');
+function commitToast() {
+  ctoast.innerHTML = '<span class="dim">$ git commit</span> fix(deps): bump nokogiri 1.10.0 → 1.18.9';
+  ctoast.classList.add('on');
+  setTimeout(() => ctoast.classList.remove('on'), 4200);
+}
+function cveFlash() {
+  cveEl.classList.remove('hidden');
+  setTimeout(() => cveEl.classList.add('hidden'), 3200);
+}
+document.getElementById('go').onclick = () => {
+  document.getElementById('overlay').classList.add('hidden');
+  setTimeout(commitToast, 1500);
+  setTimeout(cveFlash, 5000);
+  setInterval(cveFlash, 14000);
+};
+resize();
+</script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Bundle Up! — Red Ant</title>
+<meta name="description" content="A server farm where you have to keep the gems fresh! Fight the CVE zombies! Old versions are ticking time bombs! A Red Ant experiment, built with AI.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Press+Start+2P&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <header>
+    <img id="logo" src="assets/redant-logo.svg" alt="Red Ant">
+    <h1>Bundle <em>Up!</em></h1>
+    <p id="subtitle">A server farm where you have to keep the gems fresh! Fight the CVE zombies! Old versions are ticking time bombs!</p>
+  </header>
+
+  <div id="stage-wrap">
+    <div id="stage">
+      <canvas id="c"></canvas>
+      <div id="vignette"></div>
+
+      <div id="hud">
+        <div class="chip" id="hearts">♥ ♥ ♥</div>
+        <div class="chip" id="score">RUBIES ×0</div>
+        <div class="chip" id="release">RELEASE 1</div>
+        <div class="chip" id="hint">tap a tile to walk there · tap a zombie or box to act</div>
+        <div id="cve" class="hidden">!! CVE WAVE INCOMING !!</div>
+        <div id="feed"></div>
+        <div id="tags"></div>
+      </div>
+
+      <div id="dmg"></div>
+
+      <div id="overlay">
+        <div id="overlay-card">
+          <h2 id="ov-title">BUNDLE UP!</h2>
+          <p id="ov-sub">Walk the deck. Bank rubies from the gem cores.<br>
+          Patch what the CVE zombies infect — before it blows.<br>
+          Leave the good boxes. They're fine.</p>
+          <button class="btn" id="ov-btn">Start Patching</button>
+          <button class="btn ghost hidden" id="ov-btn2"></button>
+        </div>
+      </div>
+
+      <div id="toast" class="hidden"></div>
+    </div>
+  </div>
+
+  <footer>
+    <span>Bundle Up! — a <a href="https://redant.com.au">Red Ant</a> experiment, built with AI · nothing leaves your browser</span>
+  </footer>
+</div>
+<script type="module" src="src/main.js"></script>
+</body>
+</html>
