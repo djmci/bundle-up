@@ -10,30 +10,37 @@ const SPEED = .75;
 const LATCH_S = 1.5;
 const REACH = 1.05;
 
+// shared geometry — one alloc ever, not per zombie (GPU-memory hygiene)
+const zLeg = new THREE.BoxGeometry(.22, .42, .22);
+const zBody = new THREE.BoxGeometry(.56, .5, .3);
+const zArm = new THREE.BoxGeometry(.15, .5, .15);
+const zHead = new THREE.BoxGeometry(.5, .5, .5);
+const zWarn = new THREE.BoxGeometry(.1, .1, .1);
+const zHit = new THREE.CylinderGeometry(.62, .62, 1.7, 8);
+
 function buildZombie() {
   const g = new THREE.Group();
-  const add = (w, h, d, mat, x, y, z) => {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+  const add = (geo, mat, x, y, z) => {
+    const m = new THREE.Mesh(geo, mat);
     m.position.set(x, y, z);
     m.castShadow = true;
     g.add(m);
     return m;
   };
-  add(.22, .42, .22, FM.pants, -.14, .21, 0);
-  add(.22, .42, .22, FM.pants, .14, .21, 0);
-  add(.56, .5, .3, FM.hoodie, 0, .67, 0);
-  add(.15, .5, .15, FM.zombieSkin, -.22, .72, .34).rotation.x = Math.PI / 2;
-  add(.15, .5, .15, FM.zombieSkin, .22, .72, .34).rotation.x = Math.PI / 2;
-  const head = new THREE.Mesh(new THREE.BoxGeometry(.5, .5, .5),
+  add(zLeg, FM.pants, -.14, .21, 0);
+  add(zLeg, FM.pants, .14, .21, 0);
+  add(zBody, FM.hoodie, 0, .67, 0);
+  add(zArm, FM.zombieSkin, -.22, .72, .34).rotation.x = Math.PI / 2;
+  add(zArm, FM.zombieSkin, .22, .72, .34).rotation.x = Math.PI / 2;
+  const head = new THREE.Mesh(zHead,
     [FM.zombieSkin, FM.zombieSkin, FM.zombieSkin, FM.zombieSkin, FM.zombieFace, FM.zombieSkin]);
   head.position.set(0, 1.18, 0);
   head.castShadow = true;
   g.add(head);
-  const w = new THREE.Mesh(new THREE.BoxGeometry(.1, .1, .1), FM.ledRed);
-  w.position.set(0, 1.5, 0);
-  g.add(w);
+  const w = add(zWarn, FM.ledRed, 0, 1.5, 0);
+  w.castShadow = false;
   // invisible fat hitbox for fat fingers
-  const hb = new THREE.Mesh(new THREE.CylinderGeometry(.62, .62, 1.7, 8), FM.ghost);
+  const hb = new THREE.Mesh(zHit, FM.ghost);
   hb.position.y = .85;
   g.add(hb);
   return { g, hb };

@@ -126,7 +126,12 @@ export function makeWorld(scene) {
   function removeTile(t) {
     onTileDespawn(t);
     if (t.rack) { props.remove(t.rack); t.rack = null; }
-    if (t.led) { props.remove(t.led); t.led = null; }
+    if (t.led) {
+      props.remove(t.led);
+      const li = leds.findIndex(l => l.led === t.led);
+      if (li >= 0) leds.splice(li, 1);
+      t.led = null;
+    }
     t.crystals.forEach(c => dropCrystal(c));
     t.crystals.length = 0;
     tiles.delete(key(t.gx, t.gz));
@@ -143,6 +148,16 @@ export function makeWorld(scene) {
     hull: M.hull, hullDeep: M.hullDeep,
   };
   function rebuildChunk(ch) {
+    if (!ch.tiles.size) {          // empty chunk — prune it outright
+      while (ch.group.children.length) {
+        const m = ch.group.children.pop();
+        m.geometry.dispose();
+        ch.group.remove(m);
+      }
+      group.remove(ch.group);
+      chunks.delete(ckey(ch.cx, ch.cz));
+      return;
+    }
     while (ch.group.children.length) {
       const m = ch.group.children.pop();
       m.geometry.dispose();
@@ -257,7 +272,12 @@ export function makeWorld(scene) {
     if (t.kind === 'crater') return;
     t.kind = 'crater'; t.healT = 15; t.blocked = true;
     if (t.rack) { props.remove(t.rack); t.rack = null; }
-    if (t.led) { props.remove(t.led); t.led = null; }
+    if (t.led) {
+      props.remove(t.led);
+      const li = leds.findIndex(l => l.led === t.led);
+      if (li >= 0) leds.splice(li, 1);
+      t.led = null;
+    }
     t.crystals.forEach(c => dropCrystal(c));
     t.crystals.length = 0;
     dirtyAround(t.gx, t.gz); rebuildDirty();

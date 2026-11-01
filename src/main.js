@@ -114,7 +114,8 @@ const bot = makeBot(scene, world);
 
 let state = 'title';      // title | play | over
 let score = 0, rubies = 0, release = 1, patches = 0, zaps = 0;
-let hi = +(localStorage.getItem('bundleup-hi') || 0);
+let hi = 0;
+try { hi = +(localStorage.getItem('bundleup-hi') || 0); } catch (e) {}
 
 function addScore(n) { score += n; hud.setScore(score); }
 
@@ -243,7 +244,7 @@ function pick(e) {
   const dh = ray.intersectObjects(deps.list.map(d => d.mesh), false)[0];
   if (dh) return jobDep(dh.object.userData.dep);
 
-  const th = ray.intersectObjects(world.group.children, false)[0];
+  const th = ray.intersectObjects(world.group.children, true)[0];
   if (th) {
     const t = world.tileFromHit(th);
     if (t) return jobTile(t);
@@ -428,7 +429,7 @@ function gameOver() {
   state = 'over';
   bot.dead = true;
   const isHi = score > hi;
-  if (isHi) { hi = score; localStorage.setItem('bundleup-hi', score); }
+  if (isHi) { hi = score; try { localStorage.setItem('bundleup-hi', score); } catch (e) {} }
   hud.showCard({
     title: 'SYSTEM<br>BREACHED',
     sub: `SCORE ${score}${isHi ? ' — NEW BEST' : ''} · RELEASE ${release}<br>` +
