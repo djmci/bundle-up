@@ -8,6 +8,7 @@ import { makeDeps } from './deps.js';
 import { makeMobs } from './mobs.js';
 import { makeHud } from './hud.js';
 import { makeFx } from './fx.js';
+import { makeDrone } from './drone.js';
 
 // ---------- viewport (fixed logical stage, css-scaled — xmas pattern) ----------
 let SCENE_W = 1200, SCENE_H = 760;
@@ -184,6 +185,7 @@ const ev = {
 
 const deps = makeDeps(scene, world, hud, ev);
 const mobs = makeMobs(scene, world, deps, ev);
+const drone = makeDrone(scene, world, deps, bot, ev);
 
 // dep boxes roll in on new tiles, capped at the release's server count
 let depTarget = 6;
@@ -191,11 +193,13 @@ world.onTileSpawn = t => {
   if (t.kind === 'floor' && deps.list.length < depTarget &&
       Math.hypot(t.x - bot.x, t.z - bot.z) > 3 && Math.random() < .06)
     deps.spawn(t);
+  drone.maybeSpawn(t);
 };
 world.onTileDespawn = t => {
   // an infected dep rotating out counts as resolved — otherwise a
   // despawned threat can make fixTarget unreachable and stall the level
   if (t.dep) { if (t.dep.state === 'infected') progress++; deps.remove(t.dep); }
+  drone.onTileDespawn(t);
 };
 
 world.init(bot);
@@ -532,6 +536,7 @@ renderer.setAnimationLoop((ms) => {
     deps.update(dt, bot, t);
     if (state === 'play') {
       mobs.update(dt, bot, t);
+      drone.update(dt, t);
       releaseTick(dt);
       updateHint(dt);
     }
@@ -560,7 +565,7 @@ renderer.setAnimationLoop((ms) => {
 
   fx.update(dt);
   mmT -= dt;
-  if (mmT <= 0) { mmT = .15; hud.minimap(bot, mobs.list, deps.list, BOUND); }
+  if (mmT <= 0) { mmT = .15; hud.minimap(bot, mobs.list, deps.list, BOUND, drone.pos); }
   hud.placeTags(camera, SCENE_W, SCENE_H);
   renderer.render(scene, camera);
 });

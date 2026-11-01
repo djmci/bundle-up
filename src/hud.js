@@ -25,7 +25,7 @@ export function makeHud() {
   // ---- minimap radar under hearts ----
   const mm = document.getElementById('minimap');
   const mmG = mm.getContext('2d');
-  function minimap(bot, zombies, deps, bound) {
+  function minimap(bot, zombies, deps, bound, dronePos) {
     const W = mm.width, H = mm.height, cx = W / 2, cy = H / 2;
     const s = (W / 2 - 4) / bound;
     mmG.clearRect(0, 0, W, H);
@@ -46,6 +46,11 @@ export function makeHud() {
     // the bot: cream dot
     mmG.fillStyle = '#f4ecdd';
     mmG.beginPath(); mmG.arc(cx + bot.x * s, cy + bot.z * s, 2.6, 0, 7); mmG.fill();
+    // the drone: teal dot
+    if (dronePos) {
+      mmG.fillStyle = '#3cf0c8';
+      mmG.beginPath(); mmG.arc(cx + dronePos.x * s, cy + dronePos.z * s, 2, 0, 7); mmG.fill();
+    }
   }
 
   // ---- chips ----

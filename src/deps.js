@@ -90,13 +90,13 @@ export function makeDeps(scene, world, hud, ev) {
     if (!silent) ev.commit(`!! ${d.name} compromised by ${d.cve}`, 'warn');
   }
 
-  function patch(d) {
+  function patch(d, via) {
     if (d.state !== 'infected') return false;
     d.state = 'good';
     d.mesh.material = M.fresh;
     d.tag.el.textContent = tagText(d);
     d.tag.el.classList.remove('bad');
-    ev.commit(`fix(deps): bump ${d.name} ${d.verBad} → ${d.verGood}`);
+    ev.commit(`${via || 'fix(deps)'}: bump ${d.name} ${d.verBad} → ${d.verGood}`);
     ev.patched?.(d);
     return true;
   }
